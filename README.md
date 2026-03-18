@@ -4,9 +4,9 @@ Application fullstack Nuxt 3 + Supabase pour générer et sauvegarder des recett
 
 ### Stack
 
-- **Frontend** : Nuxt 3 (template minimal)
+- **Frontend** : Nuxt (template minimal)
 - **Backend** : Supabase (Auth + Postgres + RLS)
-- **API externe IA** : OpenAI (gpt-4.1-mini via SDK `openai`)
+- **API externe IA** : Mistral (via SDK `@mistralai/mistralai`)
 
 ### Modèle de données (Supabase)
 
@@ -53,7 +53,7 @@ Copier `.env.example` en `.env` à la racine du projet puis remplir :
 ```bash
 NUXT_PUBLIC_SUPABASE_URL= https://<id-projet>.supabase.co
 NUXT_PUBLIC_SUPABASE_ANON_KEY= <clé-anon-publique>
-OPENAI_API_KEY= sk-xxxxxxxxxxxxxxxx
+MISTRAL_API_KEY= <clé-api-mistral>
 ```
 
 ### Installation
@@ -77,6 +77,7 @@ L&apos;application tourne sur `http://localhost:3000`.
 - `/dashboard` : tableau de bord utilisateur
 - `/generation` : génération de recette via l&apos;API IA
 - `/recipes` : liste des recettes sauvegardées
+- `/shopping-list` : liste de courses (items par utilisateur)
 
-Les routes `/dashboard`, `/generation`, `/recipes` sont protégées par un middleware qui vérifie la session Supabase.
+Les routes `/dashboard`, `/generation`, `/recipes`, `/shopping-list` sont protégées par un middleware qui vérifie la session Supabase.
 
