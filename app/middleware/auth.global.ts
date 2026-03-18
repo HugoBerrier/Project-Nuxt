@@ -1,24 +1,11 @@
-export default defineNuxtRouteMiddleware(async (to) => {
-  // Le plugin Supabase est uniquement côté client.
-  // On sort immédiatement côté serveur pour éviter l'erreur.
-  if (import.meta.server) {
-    return
-  }
+import { useSupabaseUser } from '#imports'
 
-  const nuxtApp = useNuxtApp()
-  const supabase: any = (nuxtApp as any).$supabase
+export default defineNuxtRouteMiddleware((to) => {
+  const user = useSupabaseUser()
 
-  if (!supabase) {
-    return
-  }
+  const protectedRoutes = ['/dashboard', '/generation', '/recipes', '/shopping-list']
 
-  const { data } = await supabase.auth.getSession()
-  const user = data.session?.user ?? null
-
-  const protectedRoutes = ['/dashboard', '/generation', '/recipes']
-
-  if (protectedRoutes.includes(to.path) && !user) {
+  if (protectedRoutes.includes(to.path) && !user.value) {
     return navigateTo('/auth')
   }
 })
-

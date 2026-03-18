@@ -1,4 +1,4 @@
-import OpenAI from 'openai'
+import { Mistral } from '@mistralai/mistralai'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -8,15 +8,15 @@ export default defineEventHandler(async (event) => {
     preferences?: string
   }>(event)
 
-  if (!config.openaiApiKey) {
+  if (!config.mistralApiKey) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Clé OpenAI manquante côté serveur.'
+      statusMessage: 'Clé Mistral manquante côté serveur.'
     })
   }
 
-  const client = new OpenAI({
-    apiKey: config.openaiApiKey
+  const client = new Mistral({
+    apiKey: config.mistralApiKey
   })
 
   const prompt = `
@@ -39,12 +39,20 @@ Répond au format JSON strict :
   `.trim()
 
   try {
-    const completion = await client.responses.create({
-      model: 'gpt-4.1-mini',
-      input: prompt
+    const completion = await client.chat.complete({
+      model: 'mistral-small-latest',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      responseFormat: {
+        type: 'text'
+      }
     })
 
-    const rawText = completion.output[0].content[0]?.text?.value ?? ''
+    const rawText = completion.choices[0]?.message?.content ?? ''
     const firstBrace = rawText.indexOf('{')
     const lastBrace = rawText.lastIndexOf('}')
     const jsonText = firstBrace !== -1 && lastBrace !== -1 ? rawText.slice(firstBrace, lastBrace + 1) : rawText
@@ -60,7 +68,7 @@ Répond au format JSON strict :
     console.error('Erreur API OpenAI', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Erreur lors de la génération de la recette.'
+      statusMessage: error?.message || error?.error?.message || 'Erreur lors de la génération de la recette.'
     })
   }
 })

@@ -60,3 +60,41 @@ create policy "Préférences updatables par leur propriétaire"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+
+-- 3) Liste de courses (items)
+create table if not exists public.shopping_list_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  label text not null,
+  checked boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table public.shopping_list_items enable row level security;
+
+drop policy if exists "Courses visibles par leur propriétaire" on public.shopping_list_items;
+drop policy if exists "Courses insérables par leur propriétaire" on public.shopping_list_items;
+drop policy if exists "Courses modifiables par leur propriétaire" on public.shopping_list_items;
+drop policy if exists "Courses supprimables par leur propriétaire" on public.shopping_list_items;
+
+create policy "Courses visibles par leur propriétaire"
+  on public.shopping_list_items
+  for select
+  using (auth.uid() = user_id);
+
+create policy "Courses insérables par leur propriétaire"
+  on public.shopping_list_items
+  for insert
+  with check (auth.uid() = user_id);
+
+create policy "Courses modifiables par leur propriétaire"
+  on public.shopping_list_items
+  for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "Courses supprimables par leur propriétaire"
+  on public.shopping_list_items
+  for delete
+  using (auth.uid() = user_id);
+

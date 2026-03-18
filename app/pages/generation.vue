@@ -1,5 +1,6 @@
 <script setup lang="ts">
-const supabase = useSupabaseClientTyped()
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 
 const ingredients = ref('')
 const constraints = ref('')
@@ -7,16 +8,17 @@ const preferences = ref('')
 
 const loading = ref(false)
 const error = ref<string | null>(null)
+const success = ref<string | null>(null)
 const result = ref<{ title: string; ingredients: string; instructions: string } | null>(null)
 
 const generateRecipe = async () => {
   loading.value = true
   error.value = null
+  success.value = null
   result.value = null
 
   try {
-    const { data: sessionData } = await supabase?.auth.getSession()
-    if (!sessionData?.session) {
+    if (!user.value) {
       throw new Error('Tu dois être connecté pour générer une recette.')
     }
 
@@ -43,24 +45,26 @@ const generateRecipe = async () => {
 
 const saveRecipe = async () => {
   if (!result.value || !supabase) return
-  const { data: sessionData } = await supabase.auth.getSession()
-  const user = sessionData.session?.user
-  if (!user) {
+  success.value = null
+  if (!user.value) {
     error.value = 'Session expirée, merci de te reconnecter.'
     return
   }
 
-  const { error: insertError } = await supabase.from('recipes').insert({
-    user_id: user.id,
+  const payload = {
+    user_id: user.value.id,
     title: result.value.title,
     ingredients: result.value.ingredients,
     instructions: result.value.instructions
-  })
+  }
+
+  const { error: insertError } = await (supabase as any).from('recipes').insert(payload)
 
   if (insertError) {
     error.value = insertError.message
   } else {
     error.value = null
+    success.value = 'Recette sauvegardée dans “Mes recettes”.'
   }
 }
 </script>
@@ -109,6 +113,12 @@ const saveRecipe = async () => {
 
         <div v-if="error" class="rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-2 text-sm text-red-300">
           {{ error }}
+        </div>
+        <div
+          v-if="success"
+          class="rounded-lg bg-emerald-500/10 border border-emerald-500/40 px-3 py-2 text-sm text-emerald-200"
+        >
+          {{ success }}
         </div>
 
         <button

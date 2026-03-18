@@ -1,12 +1,29 @@
 <script setup lang="ts">
-const { $supabase } = useNuxtApp()
-const needsSupabaseConfig = computed(() => $supabase === null)
+const config = useRuntimeConfig()
+const needsSupabaseConfig = computed(() => !config.public?.supabaseUrl || !config.public?.supabaseAnonKey)
+
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+const isAuthed = computed(() => Boolean(user.value))
+const userLabel = computed(
+  () =>
+    user.value?.user_metadata?.username ||
+    user.value?.user_metadata?.full_name ||
+    user.value?.email ||
+    'Mon compte'
+)
+
+const handleLogout = async () => {
+  await supabase.auth.signOut()
+  await navigateTo('/')
+}
 const route = useRoute()
 
 const navLinks = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/generation', label: 'Générer' },
-  { to: '/recipes', label: 'Mes recettes' }
+  { to: '/recipes', label: 'Mes recettes' },
+  { to: '/shopping-list', label: 'Courses' }
 ]
 </script>
 
@@ -45,12 +62,23 @@ const navLinks = [
           >
             {{ link.label }}
           </NuxtLink>
+
           <NuxtLink
+            v-if="!isAuthed"
             to="/auth"
             class="btn-secondary ml-2 !py-2 !px-4 text-xs sm:text-sm"
           >
             Connexion
           </NuxtLink>
+
+          <div v-else class="ml-2 flex items-center gap-2">
+            <span class="hidden sm:inline text-xs text-slate-300 max-w-[180px] truncate">
+              {{ userLabel }}
+            </span>
+            <button type="button" class="btn-secondary !py-2 !px-4 text-xs sm:text-sm" @click="handleLogout">
+              Déconnexion
+            </button>
+          </div>
         </div>
       </nav>
     </header>

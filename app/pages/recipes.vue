@@ -1,36 +1,35 @@
 <script setup lang="ts">
-const supabase = useSupabaseClientTyped()
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 
 const loading = ref(true)
 const error = ref<string | null>(null)
 const recipes = ref<any[]>([])
 
-onMounted(async () => {
+const loadRecipes = async () => {
   loading.value = true
   error.value = null
   try {
-    if (!supabase) {
-      error.value = 'Supabase non configuré. Configure .env (voir .env.example).'
-    } else {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const user = sessionData.session?.user
-      if (!user) {
-        throw new Error('Session expirée, reconnecte-toi.')
-      }
+    if (!user.value) throw new Error('Session expirée, reconnecte-toi.')
 
-      const { data, error: selectError } = await supabase
-        .from('recipes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+    const { data, error: selectError } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('user_id', user.value.id)
+      .order('created_at', { ascending: false })
 
-      if (selectError) throw selectError
-      recipes.value = data ?? []
-    }
+    if (selectError) throw selectError
+    recipes.value = data ?? []
   } catch (e: any) {
     error.value = e.message ?? 'Erreur lors du chargement des recettes.'
   } finally {
     loading.value = false
+  }
+}
+
+watchEffect(() => {
+  if (user.value) {
+    loadRecipes()
   }
 })
 </script>

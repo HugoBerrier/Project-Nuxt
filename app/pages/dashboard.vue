@@ -1,19 +1,32 @@
 <script setup lang="ts">
-const supabase = useSupabaseClientTyped()
-const router = useRouter()
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 
-const user = ref<any | null>(null)
+const recipesCount = ref<number | null>(null)
 
-onMounted(async () => {
-  if (!supabase) return
-  const { data } = await supabase.auth.getUser()
-  user.value = data.user
+const loadRecipesCount = async () => {
+  if (!user.value) {
+    recipesCount.value = null
+    return
+  }
+
+  const { count, error } = await supabase
+    .from('recipes')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.value.id)
+
+  if (!error) {
+    recipesCount.value = count ?? 0
+  }
+}
+
+watchEffect(() => {
+  if (user.value) loadRecipesCount()
 })
 
 const logout = async () => {
-  if (!supabase) return
   await supabase.auth.signOut()
-  await router.push('/auth')
+  await navigateTo('/auth')
 }
 </script>
 
@@ -50,6 +63,22 @@ const logout = async () => {
         </p>
       </div>
 
+      <!-- Compteur -->
+      <NuxtLink
+        to="/recipes"
+        class="card-hover group flex flex-col p-5"
+      >
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-700/80 text-xl transition-colors group-hover:bg-emerald-500/20">
+          🔢
+        </div>
+        <p class="mt-3 text-xs font-medium uppercase tracking-wider text-slate-400 group-hover:text-emerald-400">Statistiques</p>
+        <p class="mt-1 font-semibold text-slate-100">Recettes sauvegardées</p>
+        <p class="mt-2 text-sm text-slate-400">
+          <span v-if="recipesCount === null">Chargement…</span>
+          <span v-else>{{ recipesCount }} recette{{ recipesCount > 1 ? 's' : '' }}</span>
+        </p>
+      </NuxtLink>
+
       <!-- Générer une recette -->
       <NuxtLink
         to="/generation"
@@ -77,6 +106,21 @@ const logout = async () => {
         <p class="mt-1 font-semibold text-slate-100">Mes recettes sauvegardées</p>
         <p class="mt-2 text-sm text-slate-400">
           Retrouve les recettes générées que tu souhaites refaire.
+        </p>
+      </NuxtLink>
+
+      <!-- Liste de courses -->
+      <NuxtLink
+        to="/shopping-list"
+        class="card-hover group flex flex-col p-5"
+      >
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-700/80 text-xl transition-colors group-hover:bg-emerald-500/20">
+          🧺
+        </div>
+        <p class="mt-3 text-xs font-medium uppercase tracking-wider text-slate-400 group-hover:text-emerald-400">Organisation</p>
+        <p class="mt-1 font-semibold text-slate-100">Liste de courses</p>
+        <p class="mt-2 text-sm text-slate-400">
+          Prépare ta prochaine recette : ajoute et coche tes achats.
         </p>
       </NuxtLink>
     </div>
