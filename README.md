@@ -2,6 +2,8 @@
 
 Application fullstack Nuxt 3 + Supabase pour générer et sauvegarder des recettes à partir des ingrédients disponibles, à destination d&apos;étudiants / jeunes actifs.
 
+> Documentation technique (installation, schémas, modèles) : `docs/TECHNICAL_DOCUMENTATION.md`
+
 ### Stack
 
 - **Frontend** : Nuxt (template minimal)
