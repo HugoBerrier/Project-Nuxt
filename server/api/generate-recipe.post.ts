@@ -52,7 +52,8 @@ Répond au format JSON strict :
       }
     })
 
-    const rawText = completion.choices[0]?.message?.content ?? ''
+    const content = completion.choices[0]?.message?.content
+    const rawText = typeof content === 'string' ? content : Array.isArray(content) ? content.map((c: any) => c.text ?? '').join('') : ''
     const firstBrace = rawText.indexOf('{')
     const lastBrace = rawText.lastIndexOf('}')
     const jsonText = firstBrace !== -1 && lastBrace !== -1 ? rawText.slice(firstBrace, lastBrace + 1) : rawText
